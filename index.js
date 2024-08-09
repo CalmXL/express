@@ -6,12 +6,12 @@ const app = express();
 
 // 没有 ctx 对象, 主要是靠 原生的 req, res
 app.get('/', (req, res) => {
-  console.log(req);
-
   res.end('/');
 });
 
 app.get('/hello', (req, res) => {
+  console.log('/hello');
+
   res.end('/hello');
 });
 

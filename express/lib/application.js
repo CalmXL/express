@@ -6,8 +6,8 @@ function Application() {
   this._router = new Router();
 }
 
-Application.prototype.get = function (path, handler) {
-  this._router.get(path, handler);
+Application.prototype.get = function (path, ...handlers) {
+  this._router.get(path, handlers);
 };
 
 Application.prototype.listen = function () {
@@ -16,7 +16,6 @@ Application.prototype.listen = function () {
     function done() {
       res.end(`Cannot ${req.method} ${req.url}`);
     }
-
     this._router.handle(req, res, done);
   });
 

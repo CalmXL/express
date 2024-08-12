@@ -5,6 +5,16 @@ function Layer(path, handler) {
 }
 
 Layer.prototype.match = function (pathname) {
+  if (this.path === pathname) {
+    return true;
+  }
+
+  if (!this.route) {
+    if (this.path === '/') {
+      return true;
+    }
+    return pathname.startsWith(this.path + '/');
+  }
   return this.path === pathname;
 };
 

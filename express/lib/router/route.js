@@ -1,8 +1,10 @@
 // 每个层都有一个 Route 属性
 const Layer = require('./layer');
+const methods = require('methods');
 
 function Route() {
   this.stack = [];
+  this.methods = {}; // 表示当前 route 中有哪些方法 { get: true, post: true }
 }
 
 Route.prototype.dispatch = function (req, res, out) {
@@ -22,12 +24,23 @@ Route.prototype.dispatch = function (req, res, out) {
   dispatch();
 };
 
-Route.prototype.get = function (handlers) {
-  handlers.forEach((handler) => {
-    let layer = new Layer('/', handler);
-    layer.method = 'get';
-    this.stack.push(layer);
-  });
-};
+methods.forEach((method) => {
+  Route.prototype[method] = function (handlers) {
+    handlers.forEach((handler) => {
+      let layer = new Layer('/', handler);
+      layer.method = method;
+      this.methods[method] = true; // 用户绑定方法, 我就记录一下
+      this.stack.push(layer);
+    });
+  };
+});
+
+// Route.prototype.get = function (handlers) {
+//   handlers.forEach((handler) => {
+//     let layer = new Layer('/', handler);
+//     layer.method = 'get';
+//     this.stack.push(layer);
+//   });
+// };
 
 module.exports = Route;

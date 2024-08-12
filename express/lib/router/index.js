@@ -1,6 +1,7 @@
 const url = require('url');
 const Route = require('./route');
 const Layer = require('./layer');
+const methods = require('methods');
 
 function Router() {
   this.stack = [];
@@ -15,10 +16,17 @@ Router.prototype.route = function (path) {
   return route;
 };
 
-Router.prototype.get = function (path, handlers) {
-  let route = this.route(path); // 构建一个 route
-  route.get(handlers);
-};
+methods.forEach(method => {
+  Router.prototype[method] = function (path, handlers) {
+    let route = this.route(path);
+    route[method](handlers);
+  }
+})
+
+// Router.prototype.get = function (path, handlers) {
+//   let route = this.route(path); // 构建一个 route
+//   route.get(handlers);
+// };
 
 Router.prototype.handle = function (req, res, out) {
   // 处理请求的方法
@@ -31,7 +39,7 @@ Router.prototype.handle = function (req, res, out) {
 
     let layer = this.stack[idx++];
 
-    if (layer.match(pathname)) {
+    if (layer.match(pathname) && layer.route.methods[req.method.toLowerCase()]) {
       // 区分职责, 匹配需要 layer 来做, 路由系统只负责存储层和调用层
       layer.handle_request(req, res, dispatch);
     } else {

@@ -1,38 +1,32 @@
-// 中间件的概念 控制是否向下执行 (权限处理)
-// 中间件可以拓展 req, res 中的方法
-// 中间件可以提前处理逻辑
-
+// 中间件 错误处理, 或者路由出错都统一处理
 const express = require('./express');
 
 const app = express();
 
-// express 中间件可以放置路径
-
-// 默认路径 '/'
 app.use(function (req, res, next) {
-  req.a = 1;
-  next();
+  let flag = Math.random() > 0.5;
+  if (flag) {
+    next();
+  }
+  next()
+});
+
+app.get('/', (req, res, next) => {
+  console.log('/1');
+  next('error');
 })
 
-app.use('/', function (req, res, next) {
-  req.a++;
-  next();
+app.get('/', (req, res, next) => {
+  console.log('/2');
+  res.end('/')
 })
 
-app.use('/a', function (req, res, next) {
-  req.a++;
-  next();
+// 错误处理
+app.use((err, req, res, next) => {
+  res.setHeader('Content-Type', 'text/html;charset=utf8')
+  res.end(err);
 })
 
-app.get('/a', function (req, res, next) {
-  res.end(req.a + '');
-})
-
-app.get('/', function (req, res, next) {
-  res.end(req.a + '');
-})
-
-
-app.listen(3000, () => {
+app.listen(3000, function () {
   console.log('Server is running on port 3000');
 })

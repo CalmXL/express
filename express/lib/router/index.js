@@ -45,34 +45,42 @@ Router.prototype.handle = function (req, res, out) {
   let { pathname } = url.parse(req.url);
   let idx = 0;
   // express  需要通过 dispatch
-  let dispatch = () => {
+  let dispatch = (err) => {
     // 路由处理不了,交给应用层处理
     if (idx === this.stack.length) return out();
-
     let layer = this.stack[idx++];
 
-    // 路由,中间件 都需要匹配路径才执行
-    if (layer.match(pathname)) {
+    if (err) {
+      console.log('err: ', err);
+
+      // 用户传入了错误, 需要一直往下查找, 错误处理中间件
       if (!layer.route) {
-        // 中间件
-        layer.handle_request(req, res, dispatch);
+        // 错误中间件的处理函数的参数需要有四个
+        layer.handle_error(err, req, res, dispatch);
       } else {
-        if (layer.route.methods[req.method.toLowerCase()]) {
-          layer.handle_request(req, res, dispatch);
-        } else {
-          dispatch();
-        }
+        dispatch(err); // 路由忽略
       }
     } else {
-      dispatch();
-    }
+      console.log('noerr');
 
-    // if (layer.match(pathname) && layer.route.methods[req.method.toLowerCase()]) {
-    //   // 区分职责, 匹配需要 layer 来做, 路由系统只负责存储层和调用层
-    //   layer.handle_request(req, res, dispatch);
-    // } else {
-    //   dispatch();
-    // }
+      // 路由,中间件 都需要匹配路径才执行
+      if (layer.match(pathname)) {
+        // 排除错误中间件
+        if (!layer.route && layer.handler.length !== 4) {
+          // 中间件
+          layer.handle_request(req, res, dispatch);
+        } else {
+          console.log(69, layer.route);
+          if (layer.route.methods[req.method.toLowerCase()]) {
+            layer.handle_request(req, res, dispatch);
+          } else {
+            dispatch();
+          }
+        }
+      } else {
+        dispatch();
+      }
+    }
   };
 
   dispatch();

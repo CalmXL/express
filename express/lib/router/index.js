@@ -35,19 +35,12 @@ methods.forEach((method) => {
   };
 });
 
-// Router.prototype.get = function (path, handlers) {
-//   let route = this.route(path); // 构建一个 route
-//   route.get(handlers);
-// };
-
 Router.prototype.handle = function (req, res, out) {
   // 处理请求的方法
   let { pathname } = url.parse(req.url);
   let idx = 0;
   // express  需要通过 dispatch
   let dispatch = (err) => {
-    console.log(pathname, err);
-
     // 路由处理不了,交给应用层处理
     if (idx === this.stack.length) return out();
     let layer = this.stack[idx++];
@@ -70,6 +63,7 @@ Router.prototype.handle = function (req, res, out) {
         } else {
           if (!layer.route) return dispatch();
           if (layer.route.methods[req.method.toLowerCase()]) {
+            req.params = layer.params;
             layer.handle_request(req, res, dispatch);
           } else {
             dispatch();

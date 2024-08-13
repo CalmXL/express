@@ -18,15 +18,14 @@ Application.prototype.use = function (path, handler) {
 }
 
 methods.forEach(method => {
+  console.log('application');
+
   Application.prototype[method] = function (path, ...handlers) {
+
     this.lazy_route();
     this._router[method](path, handlers);
   };
 })
-
-// Application.prototype.get = function (path, ...handlers) {
-//   this._router.get(path, handlers);
-// };
 
 Application.prototype.listen = function () {
   let server = http.createServer((req, res) => {

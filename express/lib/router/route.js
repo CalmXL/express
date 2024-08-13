@@ -27,6 +27,7 @@ Route.prototype.dispatch = function (req, res, out) {
 
 methods.forEach((method) => {
   Route.prototype[method] = function (handlers) {
+
     handlers.forEach((handler) => {
       let layer = new Layer('/', handler);
       layer.method = method;
@@ -35,13 +36,5 @@ methods.forEach((method) => {
     });
   };
 });
-
-// Route.prototype.get = function (handlers) {
-//   handlers.forEach((handler) => {
-//     let layer = new Layer('/', handler);
-//     layer.method = 'get';
-//     this.stack.push(layer);
-//   });
-// };
 
 module.exports = Route;

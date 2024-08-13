@@ -3,11 +3,19 @@ const Route = require('./route');
 const Layer = require('./layer');
 const methods = require('methods');
 
-function Router() {
-  this.stack = [];
+function Router() { // express.Router 返回的结果会放到 use 上, app.use
+  let router = (req, res, next) => {
+    router.handle(req, res, next);
+  }
+  router.stack = [];
+
+  router.__proto__ = proto;
+  return router; // 通过原型链进行查找
 }
 
-Router.prototype.route = function (path) {
+let proto = {};
+
+proto.route = function (path) {
   let route = new Route();
   // 给当前调用 get 方法放入一个层
   let layer = new Layer(path, route.dispatch.bind(route));
@@ -16,7 +24,7 @@ Router.prototype.route = function (path) {
   return route;
 };
 
-Router.prototype.use = function (path, handler) {
+proto.use = function (path, handler) {
   // 中间件会放到当前的路由系统中
   if (typeof path === 'function') {
     handler = path;
@@ -29,13 +37,15 @@ Router.prototype.use = function (path, handler) {
 };
 
 methods.forEach((method) => {
-  Router.prototype[method] = function (path, handlers) {
+  console.log('router');
+
+  proto[method] = function (path, handlers) {
     let route = this.route(path);
     route[method](handlers);
   };
 });
 
-Router.prototype.handle = function (req, res, out) {
+proto.handle = function (req, res, out) {
   // 处理请求的方法
   let { pathname } = url.parse(req.url);
   let idx = 0;

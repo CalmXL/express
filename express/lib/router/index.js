@@ -46,31 +46,29 @@ Router.prototype.handle = function (req, res, out) {
   let idx = 0;
   // express  需要通过 dispatch
   let dispatch = (err) => {
+    console.log(pathname, err);
+
     // 路由处理不了,交给应用层处理
     if (idx === this.stack.length) return out();
     let layer = this.stack[idx++];
 
     if (err) {
-      console.log('err: ', err);
-
       // 用户传入了错误, 需要一直往下查找, 错误处理中间件
       if (!layer.route) {
         // 错误中间件的处理函数的参数需要有四个
-        layer.handle_error(err, req, res, dispatch);
+        return layer.handle_error(err, req, res, dispatch);
       } else {
         dispatch(err); // 路由忽略
       }
     } else {
-      console.log('noerr');
-
       // 路由,中间件 都需要匹配路径才执行
       if (layer.match(pathname)) {
         // 排除错误中间件
         if (!layer.route && layer.handler.length !== 4) {
-          // 中间件
+          // 中间件处理
           layer.handle_request(req, res, dispatch);
         } else {
-          console.log(69, layer.route);
+          if (!layer.route) return dispatch();
           if (layer.route.methods[req.method.toLowerCase()]) {
             layer.handle_request(req, res, dispatch);
           } else {

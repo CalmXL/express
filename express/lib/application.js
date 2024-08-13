@@ -4,7 +4,6 @@ const methods = require('methods');
 
 function Application() {
   // 路由的配置应该归属 应用来进行管理
-
 }
 
 Application.prototype.lazy_route = function () {
@@ -33,6 +32,8 @@ Application.prototype.listen = function () {
   let server = http.createServer((req, res) => {
     // 应用提供一个找不到的方法, 如果路由内部无法匹配
     function done() {
+      console.log('done');
+
       res.end(`Cannot ${req.method} ${req.url}`);
     }
     this._router.handle(req, res, done);

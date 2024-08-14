@@ -16,6 +16,7 @@ Route.prototype.dispatch = function (req, res, out) {
     let layer = this.stack[idx++];
 
     if (method === layer.method) {
+      console.log(layer);
       layer.handle_request(req, res, dispatch);
     } else {
       dispatch();
@@ -26,8 +27,8 @@ Route.prototype.dispatch = function (req, res, out) {
 };
 
 methods.forEach((method) => {
-  Route.prototype[method] = function (handlers) {
 
+  Route.prototype[method] = function (handlers) {
     handlers.forEach((handler) => {
       let layer = new Layer('/', handler);
       layer.method = method;

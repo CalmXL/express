@@ -10,22 +10,19 @@ Application.prototype.lazy_route = function () {
   if (!this._router) {
     this._router = new Router();
   }
-}
+};
 
 Application.prototype.use = function (path, handler) {
   this.lazy_route();
   this._router.use(path, handler);
-}
+};
 
-methods.forEach(method => {
-  console.log('application');
-
+methods.forEach((method) => {
   Application.prototype[method] = function (path, ...handlers) {
-
     this.lazy_route();
-    this._router[method](path, handlers);
+    this._router[method](path, ...handlers);
   };
-})
+});
 
 Application.prototype.listen = function () {
   let server = http.createServer((req, res) => {
@@ -33,6 +30,8 @@ Application.prototype.listen = function () {
     function done() {
       res.end(`Cannot ${req.method} ${req.url}`);
     }
+    // console.log('listen: ', this._router);
+
     this._router.handle(req, res, done);
   });
 

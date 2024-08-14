@@ -3,10 +3,11 @@ const Route = require('./route');
 const Layer = require('./layer');
 const methods = require('methods');
 
-function Router() { // express.Router 返回的结果会放到 use 上, app.use
+function Router() {
+  // express.Router 返回的结果会放到 use 上, app.use
   let router = (req, res, next) => {
     router.handle(req, res, next);
-  }
+  };
   router.stack = [];
 
   router.__proto__ = proto;
@@ -14,6 +15,7 @@ function Router() { // express.Router 返回的结果会放到 use 上, app.use
 }
 
 let proto = {};
+let lastPath = '';
 
 proto.route = function (path) {
   let route = new Route();
@@ -37,15 +39,19 @@ proto.use = function (path, handler) {
 };
 
 methods.forEach((method) => {
-  console.log('router');
-
-  proto[method] = function (path, handlers) {
+  /**
+   * app.get 传递过来的 handlers 已经是一个数组了
+   * router.get 需要使用 ... handlers
+   */
+  proto[method] = function (path, ...handlers) {
     let route = this.route(path);
     route[method](handlers);
   };
 });
 
 proto.handle = function (req, res, out) {
+  console.log('router: stack', this.stack);
+
   // 处理请求的方法
   let { pathname } = url.parse(req.url);
   let idx = 0;
@@ -64,17 +70,34 @@ proto.handle = function (req, res, out) {
         dispatch(err); // 路由忽略
       }
     } else {
+      /**
+       * pathname: /user/add
+       * 第一次 为中间件匹配 /user 通过, 通过之后走 中间件 user 的handler 也就是一个路由实例,
+       * 第二次 路由匹配, 我们应该将 /user 也就是中间件的 path 干掉
+       */
+
+      if (lastPath) {
+        console.log('lastPath: ', lastPath);
+        pathname = pathname.replace(lastPath, '');
+      }
+
       // 路由,中间件 都需要匹配路径才执行
       if (layer.match(pathname)) {
+        console.log('matched');
+
         // 排除错误中间件
         if (!layer.route && layer.handler.length !== 4) {
+          lastPath = layer.path;
           // 中间件处理
           layer.handle_request(req, res, dispatch);
+          lastPath = '';
         } else {
           if (!layer.route) return dispatch();
           if (layer.route.methods[req.method.toLowerCase()]) {
             req.params = layer.params;
+
             layer.handle_request(req, res, dispatch);
+            // lastPath = '';
           } else {
             dispatch();
           }

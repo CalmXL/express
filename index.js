@@ -1,43 +1,34 @@
-// 多级路由
 const express = require('./express');
-const user = require('./routes/user');
-const article = require('./routes/article');
 
 const app = express();
 
-/**
- * user     add remove
- * article  add remove
- */
+app.param('id', function (req, res, next, value, key) {
+  console.log(value, key);
 
-// const user = express.Router();
-// const article = express.Router();
+  req.params.id = value + 10;
+  next();
+});
 
-// user.get('/add', function (req, res) {
-//   res.end('user add');
-// });
+app.param('id', function (req, res, next, value, key) {
+  console.log(value, key);
 
-// user.get('/remove', function (req, res) {
-//   res.end('user remove');
-// });
+  req.params.id = value - 5;
+  next();
+});
 
-// article.get('/add', function (req, res) {
-//   res.end('article add');
-// });
+app.param('name', function (req, res, next, value, key) {
+  console.log(value, key);
 
-// article.get('/remove', function (req, res) {
-//   res.end('article remove');
-// });
+  req.params.name = value + 'cool';
+  next();
+});
 
+app.get('/zf/:id/:name', function (req, res, next) {
+  res.end(JSON.stringify(req.params));
+});
 
-/**
- * user 与 article 是一个 Router 的对象
- */
-app.use('/user', user);
-app.use('/article', article);
-
-app.get('/', (req, res, next) => {
-  res.end('home');
+app.get('/', function (req, res, next) {
+  res.end('ok');
 });
 
 app.listen(3000, () => {

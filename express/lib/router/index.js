@@ -9,7 +9,7 @@ function Router() {
     router.handle(req, res, next);
   };
   router.stack = [];
-
+  router.paramsCallback = {};
   router.__proto__ = proto;
   return router; // 通过原型链进行查找
 }
@@ -38,6 +38,47 @@ proto.use = function (path, handler) {
   this.stack.push(layer);
 };
 
+proto.process_params = function (layer, req, res, done) {
+  // 当没有匹配出来 key 的时候
+  if (!layer.keys || layer.keys.length === 0) {
+    return done();
+  }
+
+  let keys = layer.keys.map((item) => item.name);
+  let params = this.paramsCallback;
+  console.log(keys, params);
+
+  let idx = 0;
+  function next() {
+    if (keys.length === idx) return done();
+    let key = keys[idx++];
+
+    processCallback(key, next);
+  }
+  next();
+
+  function processCallback(key, out) {
+    let fns = params[key];
+    let idx = 0;
+    let value = req.params[key];
+    function next() {
+      if (fns.length === idx) return out();
+      let fn = fns[idx++];
+      fn(req, res, next, value, key);
+    }
+
+    next();
+  }
+};
+
+proto.param = function (key, handler) {
+  if (this.paramsCallback[key]) {
+    this.paramsCallback[key].push(handler);
+  } else {
+    this.paramsCallback[key] = [handler];
+  }
+};
+
 methods.forEach((method) => {
   /**
    * app.get 传递过来的 handlers 已经是一个数组了
@@ -50,8 +91,6 @@ methods.forEach((method) => {
 });
 
 proto.handle = function (req, res, out) {
-  console.log('router: stack', this.stack);
-
   // 处理请求的方法
   let { pathname } = url.parse(req.url);
   let idx = 0;
@@ -77,14 +116,11 @@ proto.handle = function (req, res, out) {
        */
 
       if (lastPath) {
-        console.log('lastPath: ', lastPath);
         pathname = pathname.replace(lastPath, '');
       }
 
       // 路由,中间件 都需要匹配路径才执行
       if (layer.match(pathname)) {
-        console.log('matched');
-
         // 排除错误中间件
         if (!layer.route && layer.handler.length !== 4) {
           lastPath = layer.path;
@@ -92,12 +128,14 @@ proto.handle = function (req, res, out) {
           layer.handle_request(req, res, dispatch);
           lastPath = '';
         } else {
+          // 路由
           if (!layer.route) return dispatch();
           if (layer.route.methods[req.method.toLowerCase()]) {
             req.params = layer.params;
-
-            layer.handle_request(req, res, dispatch);
-            // lastPath = '';
+            // layer.keys = [{ name: id }, { name: name }]
+            this.process_params(layer, req, res, () => {
+              layer.handle_request(req, res, dispatch);
+            });
           } else {
             dispatch();
           }

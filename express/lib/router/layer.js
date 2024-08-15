@@ -13,9 +13,6 @@ function Layer(path, handler) {
 }
 
 Layer.prototype.match = function (pathname) {
-
-  console.log(17, this.path);
-
   let match = pathname.match(this.reg);
   if (match) {
     // 两个数组合并成对象 [xxx, 1, 2] keys: [{ name:'id'}, {name: 'name'}]
